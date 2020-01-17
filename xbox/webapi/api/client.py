@@ -21,6 +21,7 @@ from xbox.webapi.api.provider.userstats import UserStatsProvider
 from xbox.webapi.api.provider.screenshots import ScreenshotsProvider
 from xbox.webapi.api.provider.titlehub import TitlehubProvider
 from xbox.webapi.api.provider.account import AccountProvider
+from xbox.webapi.api.provider.peoplehub import PeoplehubProvider
 from xbox.webapi.api.language import XboxLiveLanguage
 
 log = logging.getLogger('xbox.api')
@@ -53,6 +54,7 @@ class XboxLiveClient(object):
         self.screenshots = ScreenshotsProvider(self)
         self.titlehub = TitlehubProvider(self)
         self.account = AccountProvider(self)
+        self.peoplehub = PeoplehubProvider(self)
 
     @classmethod
     async def create(cls, userhash, auth_token, xuid, language=XboxLiveLanguage.United_States):
