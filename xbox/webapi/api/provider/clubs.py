@@ -14,7 +14,7 @@ class ClubsProvider(BaseProvider):
         Args:
             client (:class:`XboxLiveClient`): Instance of client
         """
-        super(ClubProvider, self).__init__(client)
+        super(ClubsProvider, self).__init__(client)
         self.HEADERS_CLUB.update({'Accept-Language': self.client.language.locale})
 
     async def get_club(self, club_id):
