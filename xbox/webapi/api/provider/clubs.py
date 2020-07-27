@@ -1,6 +1,6 @@
 from xbox.webapi.api.provider.baseprovider import BaseProvider
 
-class ClubProvider(BaseProvider):
+class ClubsProvider(BaseProvider):
     PROFILE_URL = "https://clubhub.xboxlive.com"
     HEADERS_CLUB = {
         'x-xbl-contract-version': '3',

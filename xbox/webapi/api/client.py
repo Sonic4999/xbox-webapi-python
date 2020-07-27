@@ -22,7 +22,7 @@ from xbox.webapi.api.provider.userstats import UserStatsProvider
 from xbox.webapi.api.provider.screenshots import ScreenshotsProvider
 from xbox.webapi.api.provider.titlehub import TitlehubProvider
 from xbox.webapi.api.provider.account import AccountProvider
-from xbox.webapi.api.provider.clubs import ClubProvider
+from xbox.webapi.api.provider.clubs import ClubsProvider
 from xbox.webapi.api.language import XboxLiveLanguage
 
 log = logging.getLogger('xbox.api')
@@ -55,7 +55,7 @@ class XboxLiveClient(object):
         self.screenshots = ScreenshotsProvider(self)
         self.titlehub = TitlehubProvider(self)
         self.account = AccountProvider(self)
-        self.club = ClubProvider(self)
+        self.clubs = ClubsProvider(self)
 
     async def close(self):
         if not self._session.closed:
