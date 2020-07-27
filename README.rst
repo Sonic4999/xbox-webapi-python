@@ -2,7 +2,7 @@
 Xbox-WebAPI
 ===========
 
-A forked version of an aiohttp version (a fork of a fork) of the below, adding a few things I desire.
+A forked version of an aiohttp version (a fork of a fork) of the below, adding a few things I desire. Please see the aiohttp branch for these changes.
 
 .. image:: https://pypip.in/version/xbox-webapi/badge.svg
     :target: https://pypi.python.org/pypi/xbox-webapi/
