@@ -2,6 +2,8 @@
 Xbox-WebAPI
 ===========
 
+A fork of the aiohttp fork of the below, adding various things for the Bappo Realm bot.
+
 .. image:: https://pypip.in/version/xbox-webapi/badge.svg
     :target: https://pypi.python.org/pypi/xbox-webapi/
     :alt: Latest Version

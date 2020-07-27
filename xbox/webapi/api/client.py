@@ -5,6 +5,7 @@ Basic factory that stores :class:`XboxLiveLanguage`, User authorization data
 and available `Providers`
 """
 import aiohttp
+import asyncio
 import logging
 
 from xbox.webapi.api.provider.eds import EDSProvider
@@ -21,14 +22,15 @@ from xbox.webapi.api.provider.userstats import UserStatsProvider
 from xbox.webapi.api.provider.screenshots import ScreenshotsProvider
 from xbox.webapi.api.provider.titlehub import TitlehubProvider
 from xbox.webapi.api.provider.account import AccountProvider
+from xbox.webapi.api.provider.clubs import ClubProvider
 from xbox.webapi.api.language import XboxLiveLanguage
 
 log = logging.getLogger('xbox.api')
 
-
 class XboxLiveClient(object):
-    def __init__(self, client_session: aiohttp.ClientSession, xuid, language=XboxLiveLanguage.United_States):
-        self._session = client_session
+    def __init__(self, userhash, auth_token, xuid, language=XboxLiveLanguage.United_States):
+        authorization_header = {'Authorization': 'XBL3.0 x=%s;%s' % (userhash, auth_token)}
+        self._session = aiohttp.ClientSession(headers=authorization_header)
 
         if isinstance(xuid, str):
             self._xuid = int(xuid)
@@ -53,24 +55,17 @@ class XboxLiveClient(object):
         self.screenshots = ScreenshotsProvider(self)
         self.titlehub = TitlehubProvider(self)
         self.account = AccountProvider(self)
-
-    @classmethod
-    async def create(cls, userhash, auth_token, xuid, language=XboxLiveLanguage.United_States):
-        """
-        Provide various Web API from Xbox Live
-
-        Args:
-            userhash (str): Userhash obtained by authentication with Xbox Live Server
-            auth_token (str): Authentication Token (XSTS), obtained by authentication with Xbox Live Server
-            xuid (str/int): Xbox User Identification of your Xbox Live Account
-            language (str): Member of :class:`XboxLiveLanguage`
-        """
-        authorization_header = {'Authorization': 'XBL3.0 x=%s;%s' % (userhash, auth_token)}
-        return cls(aiohttp.ClientSession(headers=authorization_header), xuid, language)
+        self.club = ClubProvider(self)
 
     async def close(self):
         if not self._session.closed:
             await self._session.close()
+
+    async def __aenter__(self):
+        return self
+
+    async def __aexit__(self, exc_type, exc, tb):
+        await self.close()
 
     @property
     def xuid(self):

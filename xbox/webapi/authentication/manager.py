@@ -39,10 +39,10 @@ class MicrosoftCookieJar(aiohttp.cookiejar.CookieJar):
 
 
 class AuthenticationManager(object):
-    def __init__(self, client_session: aiohttp.ClientSession):
-        self.session = client_session
-        self.email_address = None
-        self.password = None
+    def __init__(self, email_address = None, password = None):
+        self.session = aiohttp.ClientSession(cookie_jar=MicrosoftCookieJar())
+        self.email_address = email_address
+        self.password = password
 
         self.userinfo = None
         self.refresh_token = None
@@ -52,12 +52,12 @@ class AuthenticationManager(object):
         self.title_token = None
         self.device_token = None
 
-    @classmethod
-    async def create(cls):
-        """
-        Initialize an instance of :class:`AuthenticationManager`
-        """
-        return cls(aiohttp.ClientSession(cookie_jar=MicrosoftCookieJar()))
+    async def __aenter__(self):
+        await self.authenticate()
+        return self
+
+    async def __aexit__(self, exc_type, exc, tb):
+        await self.close()
 
     @property
     def authenticated(self):
@@ -346,7 +346,7 @@ class AuthenticationManager(object):
 
         try:
             # the access token is included in fragment of the location header
-            print(await response.text())
+            # print(await response.text()) leftover debug print I think
             return self.parse_redirect_url(response.headers.get('Location'))
         except Exception as e:
             log.debug('Parsing redirection url failed, error: {0}'.format(str(e)))
