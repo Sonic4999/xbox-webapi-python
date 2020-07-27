@@ -39,10 +39,21 @@ class MicrosoftCookieJar(aiohttp.cookiejar.CookieJar):
 
 
 class AuthenticationManager(object):
-    def __init__(self, email_address = None, password = None):
+    def __init__(self, email_address = None, password = None, filepath = None, redirect_url = None):
+        """
+        Initialize an instance of :class:`AuthenticationManager`
+        Args:
+            email_address (str): Email address to use for authentication.
+            password (str): Password to use for authentication.
+            filepath (str): Path with tokens needed for authentication.
+            redirect_url (str): URL of a redirect url for authentication.
+
+        This can be initialized normally or through an async with statement, although async with will also authenticate it.
+        """
+
         self.session = aiohttp.ClientSession(cookie_jar=MicrosoftCookieJar())
-        self.email_address = email_address
-        self.password = password
+        self.email_address = None
+        self.password = None
 
         self.userinfo = None
         self.refresh_token = None
@@ -52,8 +63,16 @@ class AuthenticationManager(object):
         self.title_token = None
         self.device_token = None
 
+        if filepath != None:
+            self.load(filepath)
+        elif redirect_url != None:
+            self.access_token, self.refresh_token = self.parse_redirect_url(redirect_url)
+        elif email_address != None and password != None:
+            self.email_address = email_address
+            self.password = password
+
     async def __aenter__(self):
-        await self.authenticate()
+        await self.authenticate() # may not be the best for everyone, remove this line if needed
         return self
 
     async def __aexit__(self, exc_type, exc, tb):
@@ -70,14 +89,14 @@ class AuthenticationManager(object):
         return self.authenticated
 
     @classmethod
-    async def from_file(cls, filepath):
-        mgr = await cls.create()
+    def from_file(cls, filepath):
+        mgr = cls()
         mgr.load(filepath)
         return mgr
 
     @classmethod
-    async def from_redirect_url(cls, redirect_url):
-        mgr = await cls.create()
+    def from_redirect_url(cls, redirect_url):
+        mgr = cls()
         mgr.access_token, mgr.refresh_token = mgr.parse_redirect_url(redirect_url)
         return mgr
 

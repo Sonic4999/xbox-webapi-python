@@ -29,6 +29,17 @@ log = logging.getLogger('xbox.api')
 
 class XboxLiveClient(object):
     def __init__(self, userhash, auth_token, xuid, language=XboxLiveLanguage.United_States):
+        """
+        Provide various Web API from Xbox Live
+        Args:
+            userhash (str): Userhash obtained by authentication with Xbox Live Server
+            auth_token (str): Authentication Token (XSTS), obtained by authentication with Xbox Live Server
+            xuid (str/int): Xbox User Identification of your Xbox Live Account
+            language (str): Member of :class:`XboxLiveLanguage`
+
+        This can be initialized normally or through a async with statement.
+        """
+
         authorization_header = {'Authorization': 'XBL3.0 x=%s;%s' % (userhash, auth_token)}
         self._session = aiohttp.ClientSession(headers=authorization_header)
 
