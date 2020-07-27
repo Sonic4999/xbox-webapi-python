@@ -1,5 +1,7 @@
 from xbox.webapi.api.provider.baseprovider import BaseProvider
 
+# unfinished class, missing many features of what the Xbox API can offer
+
 class ClubsProvider(BaseProvider):
     PROFILE_URL = "https://clubhub.xboxlive.com"
     HEADERS_CLUB = {
@@ -16,6 +18,20 @@ class ClubsProvider(BaseProvider):
         """
         super(ClubsProvider, self).__init__(client)
         self.HEADERS_CLUB.update({'Accept-Language': self.client.language.locale})
+
+    async def get_clubs(self, club_ids: list()):
+        """
+        Get information about the clubs provided.
+        Args:
+            club_ids: list of ids of clubs
+        Returns:
+            :class:`aiohttp.ClientResponse`: HTTP Response
+        """
+        post_data = {
+            "Ids": [int(club_id) for club_id in club_ids]
+        }
+        url = self.PROFILE_URL + "/clubs/batch/decoration/profile"
+        return await self.client.session.post(url, json=post_data, headers=self.HEADERS_CLUB)
 
     async def get_club(self, club_id):
         """
