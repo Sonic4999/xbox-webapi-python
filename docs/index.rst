@@ -6,15 +6,13 @@
 Welcome to Xbox WebAPI's documentation!
 =======================================
 
-.. include:: ../README.rst
+.. mdinclude:: ../README.md
 
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
 
    source/xbox.webapi.authentication.manager
-   source/xbox.webapi.authentication.two_factor
-   source/xbox.webapi.common.exceptions
    source/xbox.webapi.api.client
    source/xbox.webapi.api.language
    source/xbox.webapi.api.provider

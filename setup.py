@@ -1,73 +1,66 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 
-from setuptools import setup
+from setuptools import find_packages, setup
 
+PACKAGES = [f"xbox.{p}" for p in find_packages(where="xbox")]
 
 setup(
     name="xbox-webapi",
-    version="1.1.7",
+    version="2.0.10",
     author="OpenXbox",
     description="A library to authenticate with Windows Live/Xbox Live and use their API",
-    long_description=open('README.rst').read() + '\n\n' + open('HISTORY.rst').read(),
+    long_description=open("README.md").read() + "\n\n" + open("CHANGELOG.md").read(),
+    long_description_content_type="text/markdown",
     license="GPL",
     keywords="xbox one live api",
     url="https://github.com/OpenXbox/xbox-webapi-python",
-    packages=[
-        'xbox.webapi',
-        'xbox.webapi.common',
-        'xbox.webapi.scripts',
-        'xbox.webapi.api',
-        'xbox.webapi.authentication',
-        'xbox.webapi.api.provider'
-    ],
-    namespace_packages=['xbox'],
+    packages=PACKAGES,
+    namespace_packages=["xbox"],
     zip_safe=False,
     classifiers=[
         "Development Status :: 4 - Beta",
         "Intended Audience :: Developers",
-        "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+        "License :: OSI Approved :: MIT License",
         "Topic :: Software Development :: Libraries :: Python Modules",
         "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.5",
         "Programming Language :: Python :: 3.6",
-        "Programming Language :: Python :: 3.7"
+        "Programming Language :: Python :: 3.7",
+        "Programming Language :: Python :: 3.8",
     ],
     test_suite="tests",
     install_requires=[
-        'requests',
-        'demjson',
-        'appdirs',
-        'urwid'
+        "aiohttp",
+        "appdirs",
+        "ms_cv",
+        "pydantic",
+        "ecdsa",
     ],
-    setup_requires=['pytest-runner'],
-    tests_require=[
-        'pytest',
-        'betamax'
-    ],
+    setup_requires=["pytest-runner"],
+    tests_require=["pytest", "pytest-cov", "aresponses"],
     extras_require={
-        'dev': [
-            'pip',
-            'bumpversion',
-            'wheel',
-            'watchdog',
-            'flake8',
-            'tox',
-            'coverage',
-            'Sphinx',
-            'twine',
-            'betamax',
-            'pytest',
-            'pytest-runner'
+        "dev": [
+            "pip",
+            "bump2version",
+            "wheel",
+            "watchdog",
+            "flake8",
+            "tox",
+            "coverage",
+            "Sphinx",
+            "sphinx_rtd_theme",
+            "recommonmark",
+            "twine",
+            "pytest",
+            "pytest-cov",
+            "pytest-runner",
         ],
     },
     entry_points={
-        'console_scripts': [
-            'xbox-auth-via-browser=xbox.webapi.scripts.browserauth:main',
-            'xbox-authenticate=xbox.webapi.scripts.authenticate:main',
-            'xbox-auth-tui=xbox.webapi.scripts.tui:main',
-            'xbox-searchlive=xbox.webapi.scripts.search:main',
-            'xbox-change-gt=xbox.webapi.scripts.change_gamertag:main'
+        "console_scripts": [
+            "xbox-authenticate=xbox.webapi.scripts.authenticate:main",
+            "xbox-searchlive=xbox.webapi.scripts.search:main",
+            "xbox-change-gt=xbox.webapi.scripts.change_gamertag:main",
+            "xbox-friends=xbox.webapi.scripts.friends:main",
         ]
-    }
+    },
 )

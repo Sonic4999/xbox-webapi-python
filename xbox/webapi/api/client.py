@@ -5,53 +5,115 @@ Basic factory that stores :class:`XboxLiveLanguage`, User authorization data
 and available `Providers`
 """
 import logging
-import requests
+from typing import Any
 
-from xbox.webapi.api.provider.eds import EDSProvider
-from xbox.webapi.api.provider.cqs import CQSProvider
-from xbox.webapi.api.provider.lists import ListsProvider
-from xbox.webapi.api.provider.profile import ProfileProvider
+from aiohttp import hdrs
+from aiohttp.client import ClientResponse
+from ms_cv import CorrelationVector
+
+from xbox.webapi.api.language import DefaultXboxLiveLanguages, XboxLiveLanguage
+from xbox.webapi.api.provider.account import AccountProvider
 from xbox.webapi.api.provider.achievements import AchievementsProvider
-from xbox.webapi.api.provider.usersearch import UserSearchProvider
+from xbox.webapi.api.provider.catalog import CatalogProvider
+from xbox.webapi.api.provider.cqs import CQSProvider
 from xbox.webapi.api.provider.gameclips import GameclipProvider
+from xbox.webapi.api.provider.lists import ListsProvider
+from xbox.webapi.api.provider.message import MessageProvider
 from xbox.webapi.api.provider.people import PeopleProvider
 from xbox.webapi.api.provider.presence import PresenceProvider
-from xbox.webapi.api.provider.message import MessageProvider
-from xbox.webapi.api.provider.userstats import UserStatsProvider
+from xbox.webapi.api.provider.profile import ProfileProvider
 from xbox.webapi.api.provider.screenshots import ScreenshotsProvider
+from xbox.webapi.api.provider.smartglass import SmartglassProvider
 from xbox.webapi.api.provider.titlehub import TitlehubProvider
-from xbox.webapi.api.provider.account import AccountProvider
-from xbox.webapi.api.language import XboxLiveLanguage
+from xbox.webapi.api.provider.usersearch import UserSearchProvider
+from xbox.webapi.api.provider.userstats import UserStatsProvider
+from xbox.webapi.authentication.manager import AuthenticationManager
 
-log = logging.getLogger('xbox.api')
+log = logging.getLogger("xbox.api")
 
 
-class XboxLiveClient(object):
-    def __init__(self, userhash, auth_token, xuid, language=XboxLiveLanguage.United_States):
-        """
-        Provide various Web API from Xbox Live
+class Session:
+    def __init__(self, auth_mgr: AuthenticationManager):
+        self._auth_mgr = auth_mgr
+        self._cv = CorrelationVector()
 
-        Args:
-            userhash (str): Userhash obtained by authentication with Xbox Live Server
-            auth_token (str): Authentication Token (XSTS), obtained by authentication with Xbox Live Server
-            xuid (str/int): Xbox User Identification of your Xbox Live Account
-            language (str): Member of :class:`XboxLiveLanguage`
-        """
-        authorization_header = {'Authorization': 'XBL3.0 x=%s;%s' % (userhash, auth_token)}
+    async def request(
+        self,
+        method: str,
+        url: str,
+        include_auth: bool = True,
+        include_cv: bool = True,
+        **kwargs: Any,
+    ) -> ClientResponse:
+        """Proxy Request and add Auth/CV headers."""
+        headers = kwargs.pop("headers", {})
+        params = kwargs.pop("params", None)
+        data = kwargs.pop("data", None)
 
-        self._session = requests.session()
-        self._session.headers.update(authorization_header)  # Set authorization header for whole session
+        # Extra, user supplied values
+        extra_headers = kwargs.pop("extra_headers", None)
+        extra_params = kwargs.pop("extra_params", None)
+        extra_data = kwargs.pop("extra_data", None)
 
-        if isinstance(xuid, str):
-            self._xuid = int(xuid)
-        elif isinstance(xuid, int):
-            self._xuid = xuid
-        else:
-            raise ValueError("Xuid was passed in wrong format, neither int nor string")
+        if include_auth:
+            # Ensure tokens valid
+            await self._auth_mgr.refresh_tokens()
+            # Set auth header
+            headers[
+                hdrs.AUTHORIZATION
+            ] = self._auth_mgr.xsts_token.authorization_header_value
 
-        self._lang = language
+        if include_cv:
+            headers["MS-CV"] = self._cv.increment()
 
-        self.eds = EDSProvider(self)
+        # Extend with optionally supplied values
+        if extra_headers:
+            headers.update(extra_headers)
+        if extra_params:
+            # query parameters
+            params = params or {}
+            params.update(extra_params)
+        if extra_data:
+            # form encoded post data
+            data = data or {}
+            data.update(extra_data)
+
+        return await self._auth_mgr.session.request(
+            method, url, **kwargs, headers=headers, params=params, data=data
+        )
+
+    async def get(self, url: str, **kwargs: Any) -> ClientResponse:
+        return await self.request(hdrs.METH_GET, url, **kwargs)
+
+    async def options(self, url: str, **kwargs: Any) -> ClientResponse:
+        return await self.request(hdrs.METH_OPTIONS, url, **kwargs)
+
+    async def head(self, url: str, **kwargs: Any) -> ClientResponse:
+        return await self.request(hdrs.METH_HEAD, url, **kwargs)
+
+    async def post(self, url: str, **kwargs: Any) -> ClientResponse:
+        return await self.request(hdrs.METH_POST, url, **kwargs)
+
+    async def put(self, url: str, **kwargs: Any) -> ClientResponse:
+        return await self.request(hdrs.METH_PUT, url, **kwargs)
+
+    async def patch(self, url: str, **kwargs: Any) -> ClientResponse:
+        return await self.request(hdrs.METH_PATCH, url, **kwargs)
+
+    async def delete(self, url: str, **kwargs: Any) -> ClientResponse:
+        return await self.request(hdrs.METH_DELETE, url, **kwargs)
+
+
+class XboxLiveClient:
+    def __init__(
+        self,
+        auth_mgr: AuthenticationManager,
+        language: XboxLiveLanguage = DefaultXboxLiveLanguages.United_States,
+    ):
+        self._auth_mgr = auth_mgr
+        self.session = Session(auth_mgr)
+        self._language = language
+
         self.cqs = CQSProvider(self)
         self.lists = ListsProvider(self)
         self.profile = ProfileProvider(self)
@@ -65,33 +127,23 @@ class XboxLiveClient(object):
         self.screenshots = ScreenshotsProvider(self)
         self.titlehub = TitlehubProvider(self)
         self.account = AccountProvider(self)
+        self.catalog = CatalogProvider(self)
+        self.smartglass = SmartglassProvider(self)
 
     @property
-    def xuid(self):
+    def xuid(self) -> str:
         """
         Gets the Xbox User ID
 
-        Returns:
-            int: Xbox User ID
+        Returns: Xbox user Id
         """
-        return self._xuid
+        return self._auth_mgr.xsts_token.xuid
 
     @property
-    def language(self):
+    def language(self) -> XboxLiveLanguage:
         """
         Gets the active Xbox Live Language
 
-        Returns:
-            :class:`XboxLiveLanguage`: Active Xbox Live language
+        Returns: Active Xbox Live language
         """
-        return self._lang
-
-    @property
-    def session(self):
-        """
-        Wrapper around requests session
-
-        Returns:
-            object: Instance of :class:`requests.session` - Xbox Live Authorization header is set.
-        """
-        return self._session
+        return self._language
