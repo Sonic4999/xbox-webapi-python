@@ -15,6 +15,7 @@ from xbox.webapi.api.language import DefaultXboxLiveLanguages, XboxLiveLanguage
 from xbox.webapi.api.provider.account import AccountProvider
 from xbox.webapi.api.provider.achievements import AchievementsProvider
 from xbox.webapi.api.provider.catalog import CatalogProvider
+from xbox.webapi.api.provider.club import ClubsProvider
 from xbox.webapi.api.provider.cqs import CQSProvider
 from xbox.webapi.api.provider.gameclips import GameclipProvider
 from xbox.webapi.api.provider.lists import ListsProvider
@@ -129,6 +130,7 @@ class XboxLiveClient:
         self.account = AccountProvider(self)
         self.catalog = CatalogProvider(self)
         self.smartglass = SmartglassProvider(self)
+        self.clubs = ClubsProvider(self)
 
     @property
     def xuid(self) -> str:
